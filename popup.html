@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Extension</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input {
+      padding: 5px;
+      width: 200px;
+    }
+    button {
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Enter something:</h2>
+  <!-- <input type="text" id="inputField"> -->
+  <!-- <button onclick="saveInput()">Save</button> -->
+  <!-- <button onclick="insertContent()">Insert Content</button> New button -->
+  <!-- <button id="saveButton">Save</button> -->
+  <!-- <button id="insertButton">Insert Content</button> -->
+  <label for="ipInput">IP Address:</label>
+  <input type="text" id="ipInput" placeholder="Enter IP address">
+  <br>
+  <label for="portInput">Port:</label>
+  <input type="text" id="portInput" placeholder="Enter port number">
+  <br>
+  <button id="applyProxy">Apply Proxy</button>
+  <button id="removeProxy">Remove Proxy</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
