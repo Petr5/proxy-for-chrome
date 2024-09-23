@@ -1,38 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Simple Extension</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    input {
-      padding: 5px;
-      width: 200px;
-    }
-    button {
-      padding: 5px 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO XY</title>
+    <style>
+        body {
+			font-family: 'Arial', sans-serif;
+			background-color: #e4e4e4;
+			width: 450px;
+			padding: 20px;
+			margin: 0;
+		}
+		h1 {
+			text-align: center;
+			color: #333;
+			font-size: 36px;
+		}
+		#profiles-container {
+			margin-top: 20px;
+		}
+		.profile {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			background-color: #fff;
+			padding: 15px;
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			margin-bottom: 15px;
+		}
+		.profile span {
+			font-weight: bold;
+			color: #555;
+		}
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 50px;
+			height: 25px;
+		}
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			transition: .4s;
+			border-radius: 25px;
+		}
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 19px;
+			width: 19px;
+			left: 3px;
+			bottom: 3px;
+			background-color: white;
+			transition: .4s;
+			border-radius: 50%;
+		}
+		input:checked + .slider {
+			background-color: #28a745;
+		}
+		input:checked + .slider:before {
+			transform: translateX(25px);
+		}
+
+		.profile-buttons {
+			display: flex;
+			align-items: center;
+		}
+		#add-profile-form {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-top: 20px;
+			padding: 15px;
+			background-color: #fff;
+			border-radius: 8px;
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		}
+		#add-profile-form input {
+			width: 150px;
+			padding: 10px;
+			margin-right: 10px;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			outline: none;
+			transition: border-color 0.3s ease;
+		}
+		#add-profile-form input:focus {
+			border-color: #007BFF;
+		}
+		.default-btn {
+			padding: 3px 5px;
+			background-color: #28a745;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+		}
+		.check-connection {
+			text-align: center;
+			margin-top: 20px;
+		}
+		.header-wrapper {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+		.header-container {
+			display: inline-flex;
+			align-items: center;
+			background-color: #333;
+			padding: 10px 20px;
+			border-radius: 8px;
+		}
+		.pro-box {
+			background-color: orange;
+			padding: 5px 10px;
+			border-radius: 8px;
+			margin-right: 10px;
+		}
+		.pro-text {
+			color: black;
+			font-weight: bold;
+			font-size: 24px;
+		}
+		.xy-text {
+			color: white;
+			font-weight: bold;
+			font-size: 24px;
+		}
+
+    </style>
 </head>
 <body>
-  <h2>Enter something:</h2>
-  <!-- <input type="text" id="inputField"> -->
-  <!-- <button onclick="saveInput()">Save</button> -->
-  <!-- <button onclick="insertContent()">Insert Content</button> New button -->
-  <!-- <button id="saveButton">Save</button> -->
-  <!-- <button id="insertButton">Insert Content</button> -->
-  <label for="ipInput">IP Address:</label>
-  <input type="text" id="ipInput" placeholder="Enter IP address">
-  <br>
-  <label for="portInput">Port:</label>
-  <input type="text" id="portInput" placeholder="Enter port number">
-  <br>
-  <button id="applyProxy">Apply Proxy</button>
-  <button id="removeProxy">Remove Proxy</button>
+	<div class="header-wrapper">
+		<div class="header-container">
+			<div class="pro-box">
+				<span class="pro-text">PRO</span>
+			</div>
+			<span class="xy-text">XY</span>
+		</div>
+	</div>
 
-  <script src="popup.js"></script>
+    <div id="profiles-container">
+        <!-- Здесь будут загружаться профили из chrome.storage -->
+    </div>
+
+    <!-- Форма для добавления нового профиля -->
+    <div id="add-profile-form">
+        <input type="text" id="ip" placeholder="IP адрес" required>
+        <input type="text" id="port" placeholder="Порт" required>
+        <button id="add-profile-btn" class="default-btn" style="background: #28a745;"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M11.25 12.75V18H12.75V12.75H18V11.25H12.75V6H11.25V11.25H6V12.75H11.25Z" fill="#ffffff"></path> </g></svg></button>
+    </div>
+	
+	<div class="check-connection">Проверить подключение можно здесь - <a href="https://2ip.ru" target="_blank">2ip.ru</a></div>
+
+    <!-- Подключаем JS файл -->
+    <script src="popup.js"></script>
 </body>
 </html>
