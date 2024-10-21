@@ -5,6 +5,12 @@ function loadProfiles() {
     chrome.storage.local.get([profilesKey], function(result) {
         const profiles = result[profilesKey] || [];
         const container = document.getElementById('profiles-container');
+        
+        if (!container) {
+            console.error('Контейнер для профилей не найден.');
+            return;
+        }
+        
         container.innerHTML = ''; // Очищаем контейнер
 
         profiles.forEach(profile => {
@@ -13,7 +19,6 @@ function loadProfiles() {
             profileDiv.innerHTML = `
                 <span style="font-size: 20px;">${profile.ip}:${profile.port}</span>
                 <div class="profile-buttons">
-                    <!-- Тумблер для включения/выключения профиля -->
                     <label class="switch">
                         <input type="checkbox" id="toggle-${profile.id}" ${profile.isActive ? 'checked' : ''}>
                         <span class="slider"></span>
@@ -25,18 +30,21 @@ function loadProfiles() {
 
             // Назначаем обработчик событий для тумблера
             const toggleSwitch = document.getElementById(`toggle-${profile.id}`);
-            toggleSwitch.addEventListener('change', () => toggleProfile(profile.id));
+            if (toggleSwitch) {
+                toggleSwitch.addEventListener('change', () => toggleProfile(profile.id));
+            }
 
             // Назначаем обработчик событий для кнопки удаления
             const deleteBtn = document.getElementById(`delete-${profile.id}`);
-            deleteBtn.addEventListener('click', () => deleteProfile(profile.id));
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => deleteProfile(profile.id));
+            }
         });
     });
 }
 
 function turnOnProxy(ip, port) {
-    // Define the proxy settings
-	var config = {
+    var config = {
         mode: 'fixed_servers',
         rules: {
             singleProxy: {
@@ -47,56 +55,50 @@ function turnOnProxy(ip, port) {
         }
     };
     
-    // Apply the proxy settings
     chrome.proxy.settings.set({ value: config, scope: 'regular' }, function() {
         console.log('Proxy applied:', config);
     });
 }
 
 function turnOffProxy() {
-	// Reset proxy settings to default (direct connection)
     chrome.proxy.settings.clear({ scope: 'regular' }, function() {
         console.log('Proxy removed');
     });
 }
 
-// Сохранение профилей в chrome.storage
 function saveProfiles(profiles) {
     chrome.storage.local.set({ [profilesKey]: profiles }, function() {
         loadProfiles(); // Перезагружаем профили
     });
 }
 
-// Переключение активности профиля
 function toggleProfile(id) {
     chrome.storage.local.get([profilesKey], function(result) {
         const profiles = result[profilesKey] || [];
         const profile = profiles.find(p => p.id === id);
 		
-		profile.isActive = !profile.isActive;
-        
-        // Если тумблер включен, выключаем все остальные профили
-        if (profile.isActive) {
-            profiles.forEach(p => {
-                if (p.id !== id && p.isActive) {
-                    p.isActive = false; // Отключаем другие профили
-                }
-            });
+        if (profile) {
+            profile.isActive = !profile.isActive;
 
-            turnOnProxy(profile.ip, profile.port); // Включаем текущий профиль
-        } else {
-            turnOffProxy(); // Выключаем текущий профиль
+            // Если тумблер включен, выключаем все остальные профили
+            if (profile.isActive) {
+                profiles.forEach(p => {
+                    if (p.id !== id && p.isActive) {
+                        p.isActive = false; // Отключаем другие профили
+                    }
+                });
+
+                turnOnProxy(profile.ip, profile.port); // Включаем текущий профиль
+            } else {
+                turnOffProxy(); // Выключаем текущий профиль
+            }
+
+            // Сохраняем обновленные профили
+            saveProfiles(profiles);
         }
-
-        // Сохраняем обновленные профили
-        saveProfiles(profiles);
-
-        // Обновляем интерфейс
-        updateProfileUI(profiles);
     });
 }
 
-// Функция для обновления состояния тумблеров в интерфейсе
 function updateProfileUI(profiles) {
     profiles.forEach(profile => {
         const toggleSwitch = document.getElementById(`toggle-${profile.id}`);
@@ -106,45 +108,46 @@ function updateProfileUI(profiles) {
     });
 }
 
-// Удаление профиля
 function deleteProfile(id) {
     chrome.storage.local.get([profilesKey], function(result) {
         const profiles = result[profilesKey] || [];
-		const profile = profiles.find(p => p.id === id);
-		if (profile.isActive) {
-			turnOffProxy();
-		}
+        const profile = profiles.find(p => p.id === id);
+        if (profile && profile.isActive) {
+            turnOffProxy();
+        }
         const updatedProfiles = profiles.filter(p => p.id !== id);
         saveProfiles(updatedProfiles);
     });
 }
 
-// Добавление нового профиля
-document.getElementById('add-profile-btn').addEventListener('click', () => {
-    const ip = document.getElementById('ip').value;
-    const port = document.getElementById('port').value;
+document.addEventListener('DOMContentLoaded', () => {
+    // Загрузка профилей при открытии всплывающего окна
+    loadProfiles();
 
-    if (ip && port) {
-        chrome.storage.local.get([profilesKey], function(result) {
-            const profiles = result[profilesKey] || [];
-            const newProfile = {
-                id: profiles.length + 1,
-                name: `Proxy ${profiles.length + 1}`,
-                ip: ip,
-                port: port,
-                isActive: false
-            };
-            profiles.push(newProfile);
-            saveProfiles(profiles);
+    document.getElementById('add-profile-btn').addEventListener('click', () => {
+        const ip = document.getElementById('ip').value;
+        const port = document.getElementById('port').value;
 
-            // Очищаем поля формы после добавления профиля
-            document.getElementById('ip').value = '';
-            document.getElementById('port').value = '';
-        });
-    } else {
-        alert('Пожалуйста, введите IP и порт.');
-    }
+        if (ip && port) {
+            chrome.storage.local.get([profilesKey], function(result) {
+                const profiles = result[profilesKey] || [];
+                const newProfile = {
+                    id: profiles.length + 1,
+                    name: `Proxy ${profiles.length + 1}`,
+                    ip: ip,
+                    port: port,
+                    isActive: false
+                };
+                profiles.push(newProfile);
+                saveProfiles(profiles);
+
+                // Очищаем поля формы после добавления профиля
+                document.getElementById('ip').value = '';
+                document.getElementById('port').value = '';
+            });
+        } else {
+            alert('Пожалуйста, введите IP и порт.');
+        }
+    });
 });
 
-// Загрузка профилей при загрузке страницы
-window.onload = loadProfiles;
