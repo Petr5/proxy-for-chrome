@@ -44,21 +44,35 @@ function loadProfiles() {
 }
 
 function turnOnProxy(ip, port) {
-    var config = {
-        mode: 'fixed_servers',
-        rules: {
-            singleProxy: {
-                scheme: 'http',
-                host: ip,
-                port: parseInt(port)
+    // Получаем bypassDomains из chrome.storage.local
+    chrome.storage.local.get("ignoreDomains", function (data) {
+        let bypassDomains = data.ignoreDomains || []; // Если нет данных, используем пустой массив
+        bypassDomains = bypassDomains.map(domain => {
+            if (!domain.startsWith("*.")) {
+                return "*." + domain;
             }
-        }
-    };
-    
-    chrome.proxy.settings.set({ value: config, scope: 'regular' }, function() {
-        console.log('Proxy applied:', config);
+            return domain;
+        });
+        console.log("bypassDomains ", bypassDomains);
+
+        var config = {
+            mode: 'fixed_servers',
+            rules: {
+                singleProxy: {
+                    scheme: 'http',
+                    host: ip,
+                    port: parseInt(port)
+                },
+                bypassList: bypassDomains
+            }
+        };
+
+        chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
+            console.log('Proxy applied with bypass domains:', config);
+        });
     });
 }
+
 
 function turnOffProxy() {
     chrome.proxy.settings.clear({ scope: 'regular' }, function() {
@@ -149,5 +163,109 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Пожалуйста, введите IP и порт.');
         }
     });
+
+    const toggleButton = document.getElementById("toggle-ignore-list-btn");
+    const profilesContainer = document.getElementById("profiles-container");
+    const addProfileForm = document.getElementById("add-profile-form");
+    const addIgnoreDomainForm = document.getElementById("add-ignore-domain-form");
+    const ignoreDomainsContainer = document.getElementById("ignore-domains-container");
+
+    let isIgnoreListVisible = false;
+
+    toggleButton.addEventListener("click", function () {
+        isIgnoreListVisible = !isIgnoreListVisible;
+
+        if (isIgnoreListVisible) {
+            // Скрыть весь контент, кроме игнор-листа
+            profilesContainer.style.display = "none";
+            addProfileForm.style.display = "none";
+            addIgnoreDomainForm.style.display = "block";
+            ignoreDomainsContainer.style.display = "block";
+
+            toggleButton.textContent = "Вернуться";
+            renderIgnoreDomains();
+        } else {
+            // Показать основной контент, скрыть игнор-лист
+            profilesContainer.style.display = "block";
+            addProfileForm.style.display = "block";
+            addIgnoreDomainForm.style.display = "block";
+            ignoreDomainsContainer.style.display = "none";
+
+            toggleButton.textContent = "Посмотреть Игнор лист";
+        }
+    });
+
+    const addIgnoreDomainBtn = document.getElementById("add-ignore-domain-btn");
+    const ignoreDomainInput = document.getElementById("ignore-domain");
+    const ignoreDomainsList = document.getElementById("ignore-domains-list");
+
+    // Функция для обновления списка игнорируемых доменов в интерфейсе
+    function renderIgnoreDomains() {
+        chrome.storage.local.get("ignoreDomains", function (data) {
+            const domains = data.ignoreDomains || [];
+            ignoreDomainsList.innerHTML = ""; // Очищаем список
+            domains.forEach(domain => {
+                const domainItem = document.createElement("div");
+                domainItem.className = "ignore-domain-item";
+                domainItem.textContent = domain;
+
+                const removeBtn = document.createElement("button");
+                removeBtn.textContent = "Удалить";
+                removeBtn.className = "remove-domain-btn";
+                removeBtn.style.marginLeft = "10px";
+
+                // Обработчик для удаления домена
+                removeBtn.addEventListener("click", function () {
+                    removeIgnoreDomain(domain);
+                });
+
+                domainItem.appendChild(removeBtn);
+                ignoreDomainsList.appendChild(domainItem);
+            });
+        });
+    }
+
+    // Функция для добавления нового домена
+    function addIgnoreDomain(domain) {
+        chrome.storage.local.get("ignoreDomains", function (data) {
+            const domains = data.ignoreDomains || [];
+            console.log("domains ", domains);
+            if (!domains.includes(domain)) {
+                domains.push(domain);
+                chrome.storage.local.set({ ignoreDomains: domains }, function () {
+                    renderIgnoreDomains();
+                    console.log("Domain added:", domain);
+                });
+            }
+        });
+    }
+
+    // Функция для удаления домена
+    function removeIgnoreDomain(domain) {
+        chrome.storage.local.get("ignoreDomains", function (data) {
+            const domains = data.ignoreDomains || [];
+            const updatedDomains = domains.filter(d => d !== domain);
+            chrome.storage.local.set({ ignoreDomains: updatedDomains }, function () {
+                renderIgnoreDomains();
+                console.log("Domain removed:", domain);
+            });
+           
+        });
+    }
+
+    // Обработчик кнопки добавления
+    addIgnoreDomainBtn.addEventListener("click", function () {
+        const domain = ignoreDomainInput.value.trim();
+        if (domain) {
+            addIgnoreDomain(domain);
+            ignoreDomainInput.value = ""; // Очищаем поле
+        } else {
+            alert("Введите корректный домен.");
+        }
+    });
+
+
+    // Изначально игнор-лист скрыт
+    ignoreDomainsContainer.style.display = "none";
 });
 
