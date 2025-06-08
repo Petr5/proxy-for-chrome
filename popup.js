@@ -47,12 +47,14 @@ function turnOnProxy(ip, port) {
     // Получаем bypassDomains из chrome.storage.local
     chrome.storage.local.get("ignoreDomains", function (data) {
         let bypassDomains = data.ignoreDomains || []; // Если нет данных, используем пустой массив
-        bypassDomains = bypassDomains.map(domain => {
-            if (!domain.startsWith("*.")) {
-                return "*." + domain;
+        bypassDomains = bypassDomains.flatMap(domain => {
+            if (domain.startsWith("*.")) {
+                return [domain, domain.slice(2)];  // Убираем звездочку и точку, оставляем только домен
             }
-            return domain;
+            return ["*." + domain, domain];  // Добавляем звездочку и точку, и сам домен
         });
+        
+        
         console.log("bypassDomains ", bypassDomains);
 
         var config = {
@@ -70,6 +72,11 @@ function turnOnProxy(ip, port) {
         chrome.proxy.settings.set({ value: config, scope: 'regular' }, function () {
             console.log('Proxy applied with bypass domains:', config);
         });
+        
+        chrome.proxy.onProxyError.addListener(function (error) {
+            console.error('Proxy error:', error);
+        });
+        
     });
 }
 
